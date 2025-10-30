@@ -1,0 +1,10 @@
+{
+  "name": "shopify-deep-links",
+  "version": "1.0.0",
+  "description": "Deep linking service for Flutter + Shopify",
+  "scripts": {
+    "dev": "vercel dev"
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}
