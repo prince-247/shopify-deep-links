@@ -1,0 +1,20 @@
+{
+  "routes": [
+    {
+      "src": "/products/(.*)",
+      "dest": "/api/product.js"
+    },
+    {
+      "src": "/apple-app-site-association",
+      "dest": "/public/.well-known/apple-app-site-association"
+    },
+    {
+      "src": "/.well-known/apple-app-site-association",
+      "dest": "/public/.well-known/apple-app-site-association"
+    },
+    {
+      "src": "/.well-known/assetlinks.json",
+      "dest": "/public/.well-known/assetlinks.json"
+    }
+  ]
+}
