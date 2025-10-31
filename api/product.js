@@ -36,8 +36,6 @@ export default function handler(req, res) {
             setTimeout(function() {
                 if (isIOS) {
                     window.location.href = '${appStoreUrl}';
-                } else if (isAndroid) {
-                    window.location.href = '${playStoreUrl}';
                 } else {
                     window.location.href = '${webUrl}';
                 }
@@ -55,8 +53,6 @@ export default function handler(req, res) {
             if (!appOpened) {
                 if (${isIOS}) {
                     window.location.href = '${appStoreUrl}';
-                } else if (${isAndroid}) {
-                    window.location.href = '${playStoreUrl}';
                 } else {
                     window.location.href = '${webUrl}';
                 }
