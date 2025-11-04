@@ -3,9 +3,12 @@
     "apps": [],
     "details": [
       {
-        "appID": "com.celestial.jewel.com",
-        "paths": ["/product/*"]
+        "appID": "A1B2C3D4E5.com.celestial.jewel.com",
+        "paths": ["/products/*", "NOT /_/api/*", "/"]
       }
     ]
+  },
+  "webcredentials": {
+    "apps": ["P44DL62F79.com.celestial.jewel.com"]
   }
 }
