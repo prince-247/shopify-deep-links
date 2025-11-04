@@ -34,7 +34,9 @@ export default function handler(req, res) {
 
             // If app is not installed, redirect to store after delay
             setTimeout(function() {
-                if (isAndroid) {
+                if (isIOS) {
+                    window.location.href = '${appStoreUrl}';
+                } else if (isAndroid) {
                     window.location.href = '${playStoreUrl}';
                 } else {
                     window.location.href = '${webUrl}';
@@ -51,7 +53,9 @@ export default function handler(req, res) {
         // Start the process
         setTimeout(function() {
             if (!appOpened) {
-                if (${isAndroid}) {
+                if (${isIOS}) {
+                    window.location.href = '${appStoreUrl}';
+                } else if (${isAndroid}) {
                     window.location.href = '${playStoreUrl}';
                 } else {
                     window.location.href = '${webUrl}';
