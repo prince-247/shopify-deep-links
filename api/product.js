@@ -1,39 +1,50 @@
 export default function handler(req, res) {
-  const { query } = req;
-  const productHandle = req.url.split('/products/')[1];
-
-  // Your Shopify domain
+  const fullUrl = req.url;
+  const productPath = fullUrl.split('/products/')[1];
+  const productHandle = productPath ? productPath.split('?')[0] : '';
+  
   const shopifyDomain = 'celestialjewel.co.in';
-  const flutterAppScheme = 'celestialjewel://';
-  const appStoreUrl = 'https://apps.apple.com/in/app/celestial-jewels/id6751133452'; // iOS App Store
-  const playStoreUrl = 'https://play.google.com/store/apps/details?id=your.package.name'; // Google Play
+  const appStoreUrl = 'https://apps.apple.com/in/app/celestial-jewels/id6751133452';
+  const playStoreUrl = 'https://play.google.com/store/apps/details?id=com.celestial.jewel.com';
 
-  // Get user agent to detect device
   const userAgent = req.headers['user-agent'] || '';
   const isIOS = /iPhone|iPad|iPod/.test(userAgent);
   const isAndroid = /Android/.test(userAgent);
-
-  // Product URL in your app
-  const appDeepLink = `${flutterAppScheme}product/${productHandle}`;
-
-  // Product URL on Shopify website
+  const isSafari = /Safari/.test(userAgent) && !/Chrome/.test(userAgent);
+  
   const webUrl = `https://${shopifyDomain}/products/${productHandle}`;
 
-  // HTML page with meta refresh and intent schemes
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+
   const html = `
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Redirecting...</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Celestial Jewel</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- iOS Smart App Banner -->
+    <meta name="apple-itunes-app" content="app-id=6751133452">
+    
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:title" content="Celestial Jewel">
+    <meta property="og:description" content="Beautiful Handcrafted Jewelry">
+    <meta property="og:image" content="https://${shopifyDomain}/cdn/shop/files/logo.png">
+    <meta property="og:url" content="${webUrl}">
+    
     <script type="text/javascript">
-        function openApp() {
-            // Try to open the app
-            window.location.href = '${appDeepLink}';
-
-            // If app is not installed, redirect to store after delay
-            setTimeout(function() {
+        (function() {
+            var isIOS = ${isIOS};
+            var isAndroid = ${isAndroid};
+            var isSafari = ${isSafari};
+            var startTime = Date.now();
+            var appOpened = false;
+            
+            // For Universal Links, we don't need to manually open the app
+            // iOS will handle it automatically if the app is installed
+            
+            function redirectToStore() {
                 if (isIOS) {
                     window.location.href = '${appStoreUrl}';
                 } else if (isAndroid) {
@@ -41,38 +52,33 @@ export default function handler(req, res) {
                 } else {
                     window.location.href = '${webUrl}';
                 }
-            }, 1000);
-        }
-
-        // Detect if the app was opened successfully
-        let appOpened = false;
-        window.onblur = function() {
-            appOpened = true;
-        };
-
-        // Start the process
-        setTimeout(function() {
-            if (!appOpened) {
-                if (${isIOS}) {
-                    window.location.href = '${appStoreUrl}';
-                } else if (${isAndroid}) {
-                    window.location.href = '${playStoreUrl}';
-                } else {
-                    window.location.href = '${webUrl}';
-                }
             }
-        }, 1500);
-
-        // Start opening app
-        openApp();
+            
+            function redirectToWebsite() {
+                window.location.href = '${webUrl}';
+            }
+            
+            // If this page is loaded, it means Universal Link didn't open the app
+            // So we redirect to the actual website after a short delay
+            setTimeout(function() {
+                console.log('Universal Link did not open app, redirecting to website');
+                redirectToWebsite();
+            }, 500);
+            
+        })();
     </script>
+    
+    <!-- Immediate redirect as fallback -->
+    <meta http-equiv="refresh" content="1;url=${webUrl}">
 </head>
 <body>
-    <p>Redirecting to Celestial Jewel app...</p>
+    <noscript>
+        <p>Redirecting to Celestial Jewel...</p>
+        <p><a href="${webUrl}">Click here to continue to website</a></p>
+    </noscript>
 </body>
 </html>
   `;
-
-  res.setHeader('Content-Type', 'text/html');
+  
   res.send(html);
 }
