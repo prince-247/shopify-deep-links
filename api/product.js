@@ -33,44 +33,29 @@ export default function handler(req, res) {
         const isAndroid = ${isAndroid};
 
         function openApp() {
-            // Try to open the app
-            window.location.href = '${appDeepLink}';
-
-            // If app is not installed, redirect to store after delay
-            setTimeout(function() {
-                if (isIOS) {
-                    window.location.href = '${appStoreUrl}';
-                } else if (isAndroid) {
+            if (isIOS) {
+                // For iOS, set timeout BEFORE attempting deep link
+                const timeout = setTimeout(function() {
+                    window.location.href = '${webUrl}';
+                }, 2000);
+                
+                // Clear timeout if page loses focus (app opened)
+                window.addEventListener('blur', function() {
+                    clearTimeout(timeout);
+                });
+                
+                // Attempt deep link
+                window.location.href = '${appDeepLink}';
+            } else if (isAndroid) {
+                window.location.href = '${appDeepLink}';
+                
+                setTimeout(function() {
                     window.location.href = '${playStoreUrl}';
-                } else {
-                    window.location.href = '${webUrl}';
-                }
-            }, 1000);
-        }
-
-        // Detect if the app was opened successfully
-        let appOpened = false;
-        window.onblur = function() {
-            appOpened = true;
-        };
-
-        // Handle the case when user clicks "Cancel" on the dialog
-        window.addEventListener('pagehide', function() {
-            appOpened = true;
-        });
-
-        // Start the process
-        setTimeout(function() {
-            if (!appOpened) {
-                if (isIOS) {
-                    window.location.href = '${webUrl}';
-                } else if (isAndroid) {
-                    window.location.href = '${playStoreUrl}';
-                } else {
-                    window.location.href = '${webUrl}';
-                }
+                }, 1000);
+            } else {
+                window.location.href = '${webUrl}';
             }
-        }, 1500);
+        }
 
         // Start opening app
         openApp();
