@@ -1,14 +1,12 @@
+
 {
   "applinks": {
     "apps": [],
     "details": [
       {
         "appID": "P44DL62F79.com.celestial.jewel.com",
-        "paths": ["/products/*", "NOT /_/api/*", "/"]
+        "paths": ["/products/*"]
       }
     ]
-  },
-  "webcredentials": {
-    "apps": ["P44DL62F79.com.celestial.jewel.com"]
   }
 }
