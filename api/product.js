@@ -34,18 +34,16 @@ export default function handler(req, res) {
 
         function openApp() {
             if (isIOS) {
-                // For iOS, set timeout BEFORE attempting deep link
-                const timeout = setTimeout(function() {
+                // Use iframe for iOS to avoid invalid address error
+                var iframe = document.createElement('iframe');
+                iframe.style.display = 'none';
+                iframe.src = '${appDeepLink}';
+                document.body.appendChild(iframe);
+                
+                // Fallback to website after delay
+                setTimeout(function() {
                     window.location.href = '${webUrl}';
                 }, 2000);
-                
-                // Clear timeout if page loses focus (app opened)
-                window.addEventListener('blur', function() {
-                    clearTimeout(timeout);
-                });
-                
-                // Attempt deep link
-                window.location.href = '${appDeepLink}';
             } else if (isAndroid) {
                 window.location.href = '${appDeepLink}';
                 
@@ -57,8 +55,8 @@ export default function handler(req, res) {
             }
         }
 
-        // Start opening app
-        openApp();
+        // Start opening app when page loads
+        window.onload = openApp;
     </script>
 </head>
 <body>
