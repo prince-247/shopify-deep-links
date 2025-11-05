@@ -1,92 +1,77 @@
 export default function handler(req, res) {
-  const productHandle = req.url.split('/products/')[1]?.split('?')[0] || '';
+  const { query } = req;
+  const productHandle = req.url.split('/products/')[1];
 
+  // Your Shopify domain
   const shopifyDomain = 'celestialjewel.co.in';
-  const appStoreId = '6751133452'; // Your App Store ID
-  const webUrl = `https://${shopifyDomain}/products/${productHandle}`;
+  const flutterAppScheme = 'celestialjewel://';
+  const appStoreUrl = 'https://apps.apple.com/in/app/celestial-jewels/id6751133452'; // iOS App Store
+  const playStoreUrl = 'https://play.google.com/store/apps/details?id=your.package.name'; // Google Play
 
+  // Get user agent to detect device
   const userAgent = req.headers['user-agent'] || '';
+  const isIOS = /iPhone|iPad|iPod/.test(userAgent);
   const isAndroid = /Android/.test(userAgent);
 
-  // Android: Use intent scheme with website fallback
-  if (isAndroid) {
-    const intentUrl = `intent://product/${productHandle}#Intent;scheme=celestialjewel;package=com.celestial.jewel.com;S.browser_fallback_url=${encodeURIComponent(webUrl)};end`;
-    
-    const html = `
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8">
-    <title>Opening Celestial Jewel...</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-</head>
-<body>
-    <p>Opening app...</p>
-    <script>window.location.href = '${intentUrl}';</script>
-</body>
-</html>`;
-    
-    res.setHeader('Content-Type', 'text/html');
-    return res.send(html);
-  }
+  // Product URL in your app
+  const appDeepLink = `${flutterAppScheme}product/${productHandle}`;
 
-  // For iOS: Use Smart App Banner + redirect to website
-  // Universal Links will intercept if app installed
+  // Product URL on Shopify website
+  const webUrl = `https://${shopifyDomain}/products/${productHandle}`;
+
+  // HTML page with meta refresh and intent schemes
   const html = `
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Celestial Jewel - ${productHandle}</title>
+    <title>Redirecting...</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    
-    <!-- Smart App Banner - Shows "Open in App" if installed, "Download" if not -->
-    <meta name="apple-itunes-app" content="app-id=${appStoreId}, app-argument=https://shopify-deep-links.vercel.app/products/${productHandle}">
-    
-    <!-- Immediate redirect to Shopify website -->
-    <meta http-equiv="refresh" content="0; url=${webUrl}">
-    
-    <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            margin: 0;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            text-align: center;
-            padding: 20px;
+    <script type="text/javascript">
+        function openApp() {
+            // Try to open the app
+            window.location.href = '${appDeepLink}';
+
+            // If app is not installed, redirect to store after delay
+            setTimeout(function() {
+                if (isIOS) {
+                    window.location.href = '${appStoreUrl}';
+                } else if (isAndroid) {
+                    window.location.href = '${playStoreUrl}';
+                } else {
+                    window.location.href = '${webUrl}';
+                }
+            }, 1000);
         }
-        .spinner {
-            border: 4px solid rgba(255,255,255,0.3);
-            border-radius: 50%;
-            border-top: 4px solid white;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 20px;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-    </style>
+
+        // Detect if the app was opened successfully
+        let appOpened = false;
+        window.onblur = function() {
+            appOpened = true;
+        };
+
+        // Start the process
+        setTimeout(function() {
+            if (!appOpened) {
+                if (${isIOS}) {
+                    window.location.href = '${appStoreUrl}';
+                } else if (${isAndroid}) {
+                    window.location.href = '${playStoreUrl}';
+                } else {
+                    window.location.href = '${webUrl}';
+                }
+            }
+        }, 1500);
+
+        // Start opening app
+        openApp();
+    </script>
 </head>
 <body>
-    <div>
-        <div class="spinner"></div>
-        <p>Redirecting to product page...</p>
-    </div>
-    <script>
-        // Fallback redirect
-        setTimeout(function() {
-            window.location.href = '${webUrl}';
-        }, 100);
-    </script>
+    <p>Redirecting to Celestial Jewel app...</p>
 </body>
-</html>`;
+</html>
+  `;
 
   res.setHeader('Content-Type', 'text/html');
   res.send(html);
