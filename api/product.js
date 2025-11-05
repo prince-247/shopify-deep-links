@@ -54,11 +54,16 @@ export default function handler(req, res) {
             appOpened = true;
         };
 
+        // Handle the case when user clicks "Cancel" on the dialog
+        window.addEventListener('pagehide', function() {
+            appOpened = true;
+        });
+
         // Start the process
         setTimeout(function() {
             if (!appOpened) {
                 if (isIOS) {
-                    window.location.href = '${appStoreUrl}';
+                    window.location.href = '${webUrl}';
                 } else if (isAndroid) {
                     window.location.href = '${playStoreUrl}';
                 } else {
