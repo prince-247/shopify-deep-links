@@ -28,35 +28,43 @@ export default function handler(req, res) {
     <title>Redirecting...</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <script type="text/javascript">
-        // Device detection variables
-        const isIOS = ${isIOS};
-        const isAndroid = ${isAndroid};
-
         function openApp() {
-            if (isIOS) {
-                // Use iframe for iOS to avoid invalid address error
-                var iframe = document.createElement('iframe');
-                iframe.style.display = 'none';
-                iframe.src = '${appDeepLink}';
-                document.body.appendChild(iframe);
-                
-                // Fallback to website after delay
-                setTimeout(function() {
-                    window.location.href = '${webUrl}';
-                }, 2000);
-            } else if (isAndroid) {
-                window.location.href = '${appDeepLink}';
-                
-                setTimeout(function() {
+            // Try to open the app
+            window.location.href = '${appDeepLink}';
+
+            // If app is not installed, redirect to store after delay
+            setTimeout(function() {
+                if (isIOS) {
+                    window.location.href = '${appStoreUrl}';
+                } else if (isAndroid) {
                     window.location.href = '${playStoreUrl}';
-                }, 1000);
-            } else {
-                window.location.href = '${webUrl}';
-            }
+                } else {
+                    window.location.href = '${webUrl}';
+                }
+            }, 1000);
         }
 
-        // Start opening app when page loads
-        window.onload = openApp;
+        // Detect if the app was opened successfully
+        let appOpened = false;
+        window.onblur = function() {
+            appOpened = true;
+        };
+
+        // Start the process
+        setTimeout(function() {
+            if (!appOpened) {
+                if (${isIOS}) {
+                    window.location.href = '${appStoreUrl}';
+                } else if (${isAndroid}) {
+                    window.location.href = '${playStoreUrl}';
+                } else {
+                    window.location.href = '${webUrl}';
+                }
+            }
+        }, 1500);
+
+        // Start opening app
+        openApp();
     </script>
 </head>
 <body>
