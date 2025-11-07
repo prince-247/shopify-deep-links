@@ -28,6 +28,10 @@ export default function handler(req, res) {
     <title>Redirecting...</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <script type="text/javascript">
+        // Device detection variables
+        const isIOS = ${isIOS};
+        const isAndroid = ${isAndroid};
+
         function openApp() {
             // Try to open the app
             window.location.href = '${appDeepLink}';
@@ -53,9 +57,9 @@ export default function handler(req, res) {
         // Start the process
         setTimeout(function() {
             if (!appOpened) {
-                if (${isIOS}) {
+                if (isIOS) {
                     window.location.href = '${appStoreUrl}';
-                } else if (${isAndroid}) {
+                } else if (isAndroid) {
                     window.location.href = '${playStoreUrl}';
                 } else {
                     window.location.href = '${webUrl}';
