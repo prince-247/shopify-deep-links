@@ -23,7 +23,7 @@ export default function handler(req, res) {
     <meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 <body>
-    <p>Redirecting to Celestial Jewel...</p>
+    <p>Redirecting...</p>
     
     <script type="text/javascript">
         (function() {
@@ -32,71 +32,71 @@ export default function handler(req, res) {
             const appDeepLink = '${appDeepLink}';
             const webUrl = '${webUrl}';
 
+            let startTime = new Date().getTime();
             let appOpened = false;
-            let visibilityChanged = false;
 
-            // Detect if app was opened
-            function onVisibilityChange() {
-                if (document.hidden || document.webkitHidden) {
-                    visibilityChanged = true;
+            // Event listeners to detect app opening
+            window.addEventListener('blur', function() {
+                appOpened = true;
+            });
+
+            window.addEventListener('pagehide', function() {
+                appOpened = true;
+            });
+
+            document.addEventListener('visibilitychange', function() {
+                if (document.hidden) {
                     appOpened = true;
                 }
-            }
+            });
 
-            function onBlur() {
-                appOpened = true;
-            }
-
-            document.addEventListener('visibilitychange', onVisibilityChange);
-            document.addEventListener('webkitvisibilitychange', onVisibilityChange);
-            window.addEventListener('blur', onBlur);
-            window.addEventListener('pagehide', onBlur);
-
-            function redirect() {
+            function tryOpenApp() {
                 if (isAndroid) {
-                    // Android: Try to open app directly
-                    window.location.replace(appDeepLink);
+                    // Android: Try app first
+                    window.location.href = appDeepLink;
                     
-                    // Fallback to website after 2 seconds
+                    // Check after 1.5 seconds if app opened
                     setTimeout(function() {
-                        if (!appOpened && !visibilityChanged) {
-                            window.location.replace(webUrl);
+                        let endTime = new Date().getTime();
+                        // If more than 1.5 seconds passed and page is still visible, app didn't open
+                        if (!appOpened && (endTime - startTime) < 2000) {
+                            window.location.href = webUrl;
+                        } else if (!appOpened) {
+                            // App likely opened (took time), but just in case
+                            window.location.href = webUrl;
                         }
-                    }, 2000);
+                    }, 1500);
+                    
                 } else if (isIOS) {
-                    // iOS: Use iframe to avoid Safari error
+                    // iOS: Use hidden iframe to try opening app without error
                     const iframe = document.createElement('iframe');
-                    iframe.style.border = 'none';
-                    iframe.style.width = '1px';
-                    iframe.style.height = '1px';
-                    iframe.style.position = 'absolute';
-                    iframe.style.top = '-9999px';
+                    iframe.style.display = 'none';
                     document.body.appendChild(iframe);
+                    
+                    // Try to open app via iframe
                     iframe.src = appDeepLink;
-
-                    // Check after 2 seconds
+                    
+                    // Check after 1.5 seconds
                     setTimeout(function() {
-                        if (!appOpened && !visibilityChanged) {
-                            // App not opened, go to website
-                            window.location.replace(webUrl);
-                        }
-                        // Clean up iframe
+                        // Remove iframe
                         try {
                             document.body.removeChild(iframe);
                         } catch(e) {}
-                    }, 2000);
+                        
+                        // If app didn't open, go to website
+                        if (!appOpened) {
+                            window.location.href = webUrl;
+                        }
+                    }, 1500);
+                    
                 } else {
-                    // Desktop or unknown device - go to website
-                    window.location.replace(webUrl);
+                    // Desktop or other - go directly to website
+                    window.location.href = webUrl;
                 }
             }
 
-            // Start redirect immediately when page loads
-            if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', redirect);
-            } else {
-                redirect();
-            }
+            // Start the process
+            tryOpenApp();
         })();
     </script>
 </body>
