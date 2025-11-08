@@ -5,7 +5,7 @@ export default function handler(req, res) {
   // Your Shopify domain
   const shopifyDomain = 'celestialjewel.co.in';
   const flutterAppScheme = 'celestialjewel://';
-  const appStoreUrl = 'https://apps.apple.com/in/app/celestial-jewels/id6751133452'; // iOS App Store
+  const appStoreUrl = ''; // iOS App Store
   const playStoreUrl = 'https://play.google.com/store/apps/details?id=your.package.name'; // Google Play
 
   // Get user agent to detect device
