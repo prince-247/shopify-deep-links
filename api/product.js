@@ -2,18 +2,24 @@ export default function handler(req, res) {
   const { query } = req;
   const productHandle = req.url.split('/products/')[1];
 
+  // Your Shopify domain
   const shopifyDomain = 'celestialjewel.co.in';
   const flutterAppScheme = 'celestialjewel://';
-  const appStoreUrl = 'https://apps.apple.com/in/app/celestial-jewels/id6751133452';
-  const playStoreUrl = 'https://play.google.com/store/apps/details?id=your.package.name';
+  const appStoreUrl = 'https://apps.apple.com/in/app/celestial-jewels/id6751133452'; // iOS App Store
+  const playStoreUrl = 'https://play.google.com/store/apps/details?id=your.package.name'; // Google Play
 
+  // Get user agent to detect device
   const userAgent = req.headers['user-agent'] || '';
   const isIOS = /iPhone|iPad|iPod/.test(userAgent);
   const isAndroid = /Android/.test(userAgent);
 
+  // Product URL in your app
   const appDeepLink = `${flutterAppScheme}product/${productHandle}`;
+
+  // Product URL on Shopify website
   const webUrl = `https://${shopifyDomain}/products/${productHandle}`;
 
+  // HTML page with meta refresh and intent schemes
   const html = `
 <!DOCTYPE html>
 <html>
@@ -21,84 +27,48 @@ export default function handler(req, res) {
     <meta charset="utf-8">
     <title>Redirecting...</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-</head>
-<body>
-    <p>Redirecting...</p>
-    
     <script type="text/javascript">
-        (function() {
-            const isIOS = ${isIOS};
-            const isAndroid = ${isAndroid};
-            const appDeepLink = '${appDeepLink}';
-            const webUrl = '${webUrl}';
+        function openApp() {
+            // Try to open the app
+            window.location.href = '${appDeepLink}';
 
-            let startTime = new Date().getTime();
-            let appOpened = false;
-
-            // Event listeners to detect app opening
-            window.addEventListener('blur', function() {
-                appOpened = true;
-            });
-
-            window.addEventListener('pagehide', function() {
-                appOpened = true;
-            });
-
-            document.addEventListener('visibilitychange', function() {
-                if (document.hidden) {
-                    appOpened = true;
-                }
-            });
-
-            function tryOpenApp() {
-                if (isAndroid) {
-                    // Android: Try app first
-                    window.location.href = appDeepLink;
-                    
-                    // Check after 1.5 seconds if app opened
-                    setTimeout(function() {
-                        let endTime = new Date().getTime();
-                        // If more than 1.5 seconds passed and page is still visible, app didn't open
-                        if (!appOpened && (endTime - startTime) < 2000) {
-                            window.location.href = webUrl;
-                        } else if (!appOpened) {
-                            // App likely opened (took time), but just in case
-                            window.location.href = webUrl;
-                        }
-                    }, 1500);
-                    
-                } else if (isIOS) {
-                    // iOS: Use hidden iframe to try opening app without error
-                    const iframe = document.createElement('iframe');
-                    iframe.style.display = 'none';
-                    document.body.appendChild(iframe);
-                    
-                    // Try to open app via iframe
-                    iframe.src = appDeepLink;
-                    
-                    // Check after 1.5 seconds
-                    setTimeout(function() {
-                        // Remove iframe
-                        try {
-                            document.body.removeChild(iframe);
-                        } catch(e) {}
-                        
-                        // If app didn't open, go to website
-                        if (!appOpened) {
-                            window.location.href = webUrl;
-                        }
-                    }, 1500);
-                    
+            // If app is not installed, redirect to store after delay
+            setTimeout(function() {
+                if (isIOS) {
+                    window.location.href = '${appStoreUrl}';
+                } else if (isAndroid) {
+                    window.location.href = '${playStoreUrl}';
                 } else {
-                    // Desktop or other - go directly to website
-                    window.location.href = webUrl;
+                    window.location.href = '${webUrl}';
+                }
+            }, 1000);
+        }
+
+        // Detect if the app was opened successfully
+        let appOpened = false;
+        window.onblur = function() {
+            appOpened = true;
+        };
+
+        // Start the process
+        setTimeout(function() {
+            if (!appOpened) {
+                if (${isIOS}) {
+                    window.location.href = '${appStoreUrl}';
+                } else if (${isAndroid}) {
+                    window.location.href = '${playStoreUrl}';
+                } else {
+                    window.location.href = '${webUrl}';
                 }
             }
+        }, 1500);
 
-            // Start the process
-            tryOpenApp();
-        })();
+        // Start opening app
+        openApp();
     </script>
+</head>
+<body>
+    <p>Redirecting to Celestial Jewel app...</p>
 </body>
 </html>
   `;
