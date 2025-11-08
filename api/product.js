@@ -1,6 +1,5 @@
 export default function handler(req, res) {
   const productHandle = req.url.split('/products/')[1];
-
   const shopifyDomain = 'celestialjewel.co.in';
   const flutterAppScheme = 'celestialjewel://';
   const appStoreUrl = 'https://apps.apple.com/in/app/celestial-jewels/id6751133452';
@@ -24,42 +23,47 @@ export default function handler(req, res) {
   <script type="text/javascript">
     const isIOS = ${isIOS};
     const isAndroid = ${isAndroid};
-
     const appLink = '${appDeepLink}';
     const appStore = '${appStoreUrl}';
     const playStore = '${playStoreUrl}';
     const webUrl = '${webUrl}';
+    let opened = false;
 
-    function tryOpenApp() {
-      const now = Date.now();
-      const timeout = 1500;
+    function openApp() {
+      if (isIOS) {
+        // iOS: use hidden iframe to avoid "invalid address"
+        const iframe = document.createElement('iframe');
+        iframe.style.display = 'none';
+        iframe.src = appLink;
+        document.body.appendChild(iframe);
+      } else {
+        // Android: open app directly
+        window.location.href = appLink;
+      }
 
-      // Set up fallback
-      let hasVisibilityChanged = false;
-      document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'hidden') {
-          hasVisibilityChanged = true;
-        }
-      });
-
-      // Try opening app
-      window.location.href = appLink;
-
-      // After delay, fallback if app didn’t open
+      // If the user doesn't switch to app, open fallback
       setTimeout(() => {
-        if (!hasVisibilityChanged) {
+        if (!opened) {
           if (isIOS) {
-            window.location.replace(webUrl);  // ✅ open website if app not installed
+            window.location.replace(webUrl);
           } else if (isAndroid) {
             window.location.replace(playStore);
           } else {
             window.location.replace(webUrl);
           }
         }
-      }, timeout);
+      }, 1500);
     }
 
-    window.onload = tryOpenApp;
+    // Detect if user left Safari (means app opened)
+    window.addEventListener('pagehide', () => {
+      opened = true;
+    });
+    window.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden') opened = true;
+    });
+
+    window.onload = openApp;
   </script>
 </head>
 <body>
