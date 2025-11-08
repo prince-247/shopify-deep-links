@@ -1,5 +1,6 @@
 export default function handler(req, res) {
   const productHandle = req.url.split('/products/')[1];
+
   const shopifyDomain = 'celestialjewel.co.in';
   const flutterAppScheme = 'celestialjewel://';
   const appStoreUrl = 'https://apps.apple.com/in/app/celestial-jewels/id6751133452';
@@ -23,47 +24,42 @@ export default function handler(req, res) {
   <script type="text/javascript">
     const isIOS = ${isIOS};
     const isAndroid = ${isAndroid};
+
     const appLink = '${appDeepLink}';
     const appStore = '${appStoreUrl}';
     const playStore = '${playStoreUrl}';
     const webUrl = '${webUrl}';
-    let opened = false;
 
-    function openApp() {
-      if (isIOS) {
-        // iOS: use hidden iframe to avoid "invalid address"
-        const iframe = document.createElement('iframe');
-        iframe.style.display = 'none';
-        iframe.src = appLink;
-        document.body.appendChild(iframe);
-      } else {
-        // Android: open app directly
-        window.location.href = appLink;
-      }
+    function tryOpenApp() {
+      const now = Date.now();
+      const timeout = 1500;
 
-      // If the user doesn't switch to app, open fallback
+      // Set up fallback
+      let hasVisibilityChanged = false;
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'hidden') {
+          hasVisibilityChanged = true;
+        }
+      });
+
+      // Try opening app
+      window.location.href = appLink;
+
+      // After delay, fallback if app didn’t open
       setTimeout(() => {
-        if (!opened) {
+        if (!hasVisibilityChanged) {
           if (isIOS) {
-            window.location.replace(webUrl);
+            window.location.replace(webUrl);  // ✅ open website if app not installed
           } else if (isAndroid) {
             window.location.replace(playStore);
           } else {
             window.location.replace(webUrl);
           }
         }
-      }, 1500);
+      }, timeout);
     }
 
-    // Detect if user left Safari (means app opened)
-    window.addEventListener('pagehide', () => {
-      opened = true;
-    });
-    window.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'hidden') opened = true;
-    });
-
-    window.onload = openApp;
+    window.onload = tryOpenApp;
   </script>
 </head>
 <body>
