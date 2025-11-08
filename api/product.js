@@ -1,77 +1,72 @@
 export default function handler(req, res) {
-  const { query } = req;
   const productHandle = req.url.split('/products/')[1];
 
-  // Your Shopify domain
   const shopifyDomain = 'celestialjewel.co.in';
   const flutterAppScheme = 'celestialjewel://';
-  const appStoreUrl = 'https://apps.apple.com/in/app/celestial-jewels/id6751133452'; // iOS App Store
-  const playStoreUrl = 'https://play.google.com/store/apps/details?id=your.package.name'; // Google Play
+  const appStoreUrl = 'https://apps.apple.com/in/app/celestial-jewels/id6751133452';
+  const playStoreUrl = 'https://play.google.com/store/apps/details?id=your.package.name';
 
-  // Get user agent to detect device
   const userAgent = req.headers['user-agent'] || '';
   const isIOS = /iPhone|iPad|iPod/.test(userAgent);
   const isAndroid = /Android/.test(userAgent);
 
-  // Product URL in your app
   const appDeepLink = `${flutterAppScheme}product/${productHandle}`;
-
-  // Product URL on Shopify website
   const webUrl = `https://${shopifyDomain}/products/${productHandle}`;
 
-  // HTML page with meta refresh and intent schemes
   const html = `
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="utf-8">
-    <title>Redirecting...</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <script type="text/javascript">
-        function openApp() {
-            // Try to open the app
-            window.location.href = '${appDeepLink}';
+  <meta charset="utf-8">
+  <title>Redirecting...</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
 
-            // If app is not installed, redirect to store after delay
-            setTimeout(function() {
-                if (isIOS) {
-                    window.location.href = '${appStoreUrl}';
-                } else if (isAndroid) {
-                    window.location.href = '${playStoreUrl}';
-                } else {
-                    window.location.href = '${webUrl}';
-                }
-            }, 1000);
+  <script type="text/javascript">
+    const isIOS = ${isIOS};
+    const isAndroid = ${isAndroid};
+
+    const appLink = '${appDeepLink}';
+    const appStore = '${appStoreUrl}';
+    const playStore = '${playStoreUrl}';
+    const webUrl = '${webUrl}';
+
+    function tryOpenApp() {
+      const now = Date.now();
+      const timeout = 1500;
+
+      // Set up fallback
+      let hasVisibilityChanged = false;
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'hidden') {
+          hasVisibilityChanged = true;
         }
+      });
 
-        // Detect if the app was opened successfully
-        let appOpened = false;
-        window.onblur = function() {
-            appOpened = true;
-        };
+      // Try opening app
+      window.location.href = appLink;
 
-        // Start the process
-        setTimeout(function() {
-            if (!appOpened) {
-                if (${isIOS}) {
-                    window.location.href = '${appStoreUrl}';
-                } else if (${isAndroid}) {
-                    window.location.href = '${playStoreUrl}';
-                } else {
-                    window.location.href = '${webUrl}';
-                }
-            }
-        }, 1500);
+      // After delay, fallback if app didn’t open
+      setTimeout(() => {
+        if (!hasVisibilityChanged) {
+          if (isIOS) {
+            window.location.replace(webUrl);  // ✅ open website if app not installed
+          } else if (isAndroid) {
+            window.location.replace(playStore);
+          } else {
+            window.location.replace(webUrl);
+          }
+        }
+      }, timeout);
+    }
 
-        // Start opening app
-        openApp();
-    </script>
+    window.onload = tryOpenApp;
+  </script>
 </head>
 <body>
-    <p>Redirecting to Celestial Jewel app...</p>
+  <p>Redirecting to Celestial Jewel app...</p>
 </body>
 </html>
-  `;
+`;
 
   res.setHeader('Content-Type', 'text/html');
   res.send(html);
